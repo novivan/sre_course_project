@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-auction}
+      POSTGRES_USER: ${POSTGRES_USER:-auction}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-auction}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  api:
+    image: auction:local
+    build:
+      context: .
+    environment: &application-environment
+      APP_ROLE: api
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-auction}
+      DB_USERNAME: ${POSTGRES_USER:-auction}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-auction}
+      SERVER_PORT: 8080
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  worker:
+    image: auction:local
+    pull_policy: never
+    environment:
+      <<: *application-environment
+      APP_ROLE: worker
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      SPRING_FLYWAY_ENABLED: "false"
+      DB_POOL_SIZE: 2
+      WORKER_POLL_DELAY: ${WORKER_POLL_DELAY:-1s}
+      WORKER_BATCH_SIZE: ${WORKER_BATCH_SIZE:-100}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
