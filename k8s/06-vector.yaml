@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vector
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: auction-vector
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - nodes
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: auction-vector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: auction-vector
+subjects:
+  - kind: ServiceAccount
+    name: vector
+    namespace: auction
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-config
+data:
+  vector.yaml: |
+    data_dir: /vector-data-dir
+
+    sources:
+      kubernetes_logs:
+        type: kubernetes_logs
+        self_node_name: ${VECTOR_SELF_NODE_NAME}
+        extra_label_selector: app.kubernetes.io/name=auction
+        glob_minimum_cooldown_ms: 1000
+        read_from: beginning
+
+    transforms:
+      application_containers:
+        type: filter
+        inputs:
+          - kubernetes_logs
+        condition: >-
+          .kubernetes.container_name == "api" ||
+          .kubernetes.container_name == "worker"
+
+      application_json:
+        type: remap
+        inputs:
+          - application_containers
+        drop_on_abort: true
+        source: |
+          parsed = object!(parse_json!(.message))
+          . = merge(., parsed)
+
+    sinks:
+      victoria_logs:
+        type: http
+        inputs:
+          - application_json
+        uri: "http://victoria-logs:9428/insert/jsonline?_stream_fields=service.name,kubernetes.pod_name,kubernetes.container_name&_msg_field=message&_time_field=@timestamp"
+        compression: gzip
+        encoding:
+          codec: json
+        framing:
+          method: newline_delimited
+        healthcheck:
+          enabled: false
+        request:
+          headers:
+            Content-Type: application/stream+json
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: vector
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vector
+        app.kubernetes.io/component: log-shipper
+        vector.dev/exclude: "true"
+    spec:
+      serviceAccountName: vector
+      containers:
+        - name: vector
+          image: timberio/vector:0.58.0-debian
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config
+            - /etc/vector/vector.yaml
+          env:
+            - name: VECTOR_LOG
+              value: info
+            - name: VECTOR_SELF_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: VECTOR_SELF_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: VECTOR_SELF_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/vector
+              readOnly: true
+            - name: var-log
+              mountPath: /var/log
+              readOnly: true
+            - name: var-lib
+              mountPath: /var/lib
+              readOnly: true
+            - name: data
+              mountPath: /vector-data-dir
+      volumes:
+        - name: config
+          configMap:
+            name: vector-config
+        - name: var-log
+          hostPath:
+            path: /var/log
+        - name: var-lib
+          hostPath:
+            path: /var/lib
+        - name: data
+          hostPath:
+            path: /var/lib/vector
+            type: DirectoryOrCreate

@@ -40,6 +40,8 @@ spec:
           env:
             - name: APP_ROLE
               value: worker
+            - name: SERVICE_NAME
+              value: auction-worker
             - name: SPRING_MAIN_WEB_APPLICATION_TYPE
               value: none
             - name: SPRING_FLYWAY_ENABLED

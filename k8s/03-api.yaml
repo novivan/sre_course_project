@@ -39,6 +39,8 @@ spec:
           env:
             - name: APP_ROLE
               value: api
+            - name: SERVICE_NAME
+              value: auction-api
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:

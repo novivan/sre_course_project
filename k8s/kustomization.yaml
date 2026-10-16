@@ -7,4 +7,6 @@ resources:
   - 02-postgres.yaml
   - 03-api.yaml
   - 04-worker.yaml
+  - 05-victoria-logs.yaml
+  - 06-vector.yaml
 
