@@ -26,13 +26,14 @@ services:
       DB_USERNAME: ${POSTGRES_USER:-auction}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-auction}
       SERVER_PORT: 8080
+      MANAGEMENT_SERVER_PORT: 9090
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:9090/actuator/health/readiness"]
       interval: 2s
       timeout: 3s
       retries: 20
@@ -45,7 +46,6 @@ services:
       <<: *application-environment
       APP_ROLE: worker
       SERVICE_NAME: auction-worker
-      SPRING_MAIN_WEB_APPLICATION_TYPE: none
       SPRING_FLYWAY_ENABLED: "false"
       DB_POOL_SIZE: 2
       WORKER_POLL_DELAY: ${WORKER_POLL_DELAY:-1s}

@@ -13,6 +13,10 @@ spec:
       labels:
         app.kubernetes.io/name: auction
         app.kubernetes.io/component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: /metrics
     spec:
       initContainers:
         - name: wait-for-postgres
@@ -33,6 +37,8 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+            - name: metrics
+              containerPort: 9090
           envFrom:
             - configMapRef:
                 name: auction-config
@@ -54,19 +60,19 @@ spec:
           startupProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: http
+              port: metrics
             periodSeconds: 2
             failureThreshold: 60
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: http
+              port: metrics
             periodSeconds: 5
             timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: http
+              port: metrics
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 6

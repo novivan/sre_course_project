@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import dev.sre.auction.lot.domain.Lot;
 import dev.sre.auction.platform.error.EntityNotFoundException;
+import dev.sre.auction.platform.metrics.AuctionMetrics;
 import dev.sre.auction.user.application.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +16,18 @@ public class CreateLotService {
     private final LotRepository lots;
     private final UserRepository users;
     private final Clock clock;
+    private final AuctionMetrics metrics;
 
-    public CreateLotService(LotRepository lots, UserRepository users, Clock clock) {
+    public CreateLotService(
+            LotRepository lots,
+            UserRepository users,
+            Clock clock,
+            AuctionMetrics metrics
+    ) {
         this.lots = lots;
         this.users = users;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -36,6 +44,7 @@ public class CreateLotService {
                 clock.instant()
         );
         lots.insert(lot);
+        metrics.lotCreated();
         return lot;
     }
 

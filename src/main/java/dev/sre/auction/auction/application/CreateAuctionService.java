@@ -12,6 +12,7 @@ import dev.sre.auction.lot.domain.Lot;
 import dev.sre.auction.platform.error.BusinessConflictException;
 import dev.sre.auction.platform.error.EntityNotFoundException;
 import dev.sre.auction.platform.error.InvalidRequestException;
+import dev.sre.auction.platform.metrics.AuctionMetrics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,11 +22,18 @@ public class CreateAuctionService {
     private final AuctionRepository auctions;
     private final LotRepository lots;
     private final Clock clock;
+    private final AuctionMetrics metrics;
 
-    public CreateAuctionService(AuctionRepository auctions, LotRepository lots, Clock clock) {
+    public CreateAuctionService(
+            AuctionRepository auctions,
+            LotRepository lots,
+            Clock clock,
+            AuctionMetrics metrics
+    ) {
         this.auctions = auctions;
         this.lots = lots;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -88,6 +96,7 @@ public class CreateAuctionService {
                 now
         );
         auctions.insert(auction);
+        metrics.auctionCreated();
         return auction;
     }
 }

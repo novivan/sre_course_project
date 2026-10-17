@@ -9,6 +9,7 @@ import dev.sre.auction.auction.domain.Bid;
 import dev.sre.auction.lot.application.LotRepository;
 import dev.sre.auction.lot.domain.Lot;
 import dev.sre.auction.platform.error.EntityNotFoundException;
+import dev.sre.auction.platform.metrics.AuctionMetrics;
 import dev.sre.auction.user.application.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,19 +22,22 @@ public class PlaceBidService {
     private final LotRepository lots;
     private final UserRepository users;
     private final Clock clock;
+    private final AuctionMetrics metrics;
 
     public PlaceBidService(
             AuctionRepository auctions,
             BidRepository bids,
             LotRepository lots,
             UserRepository users,
-            Clock clock
+            Clock clock,
+            AuctionMetrics metrics
     ) {
         this.auctions = auctions;
         this.bids = bids;
         this.lots = lots;
         this.users = users;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -68,6 +72,7 @@ public class PlaceBidService {
         );
         bids.insert(bid);
         auctions.update(auction);
+        metrics.bidPlaced();
         return bid;
     }
 }

@@ -22,6 +22,7 @@ import dev.sre.auction.platform.error.BusinessConflictException;
 import dev.sre.auction.platform.error.EntityNotFoundException;
 import dev.sre.auction.user.application.CreateUserService;
 import dev.sre.auction.user.domain.User;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -70,8 +71,16 @@ class AuctionFlowIntegrationTest {
     @Autowired
     AuctionQueryService query;
 
+    @Autowired
+    MeterRegistry meterRegistry;
+
     @Test
     void createsAuctionAndKeepsBidIdempotent() {
+        double usersBefore = count("auction.users.created");
+        double lotsBefore = count("auction.lots.created");
+        double auctionsBefore = count("auction.auctions.created");
+        double bidsBefore = count("auction.bids.placed");
+
         User seller = createUser.execute("seller-" + UUID.randomUUID());
         User bidder = createUser.execute("bidder-" + UUID.randomUUID());
         Lot lot = createLot.execute(seller.id(), "Rare card", "First edition", null);
@@ -97,6 +106,10 @@ class AuctionFlowIntegrationTest {
         assertThat(retried.id()).isEqualTo(first.id());
         assertThat(query.get(auction.id()).currentPriceMinor()).isEqualTo(1_100);
         assertThat(query.bidHistory(auction.id(), 10)).hasSize(1);
+        assertThat(count("auction.users.created")).isEqualTo(usersBefore + 2);
+        assertThat(count("auction.lots.created")).isEqualTo(lotsBefore + 1);
+        assertThat(count("auction.auctions.created")).isEqualTo(auctionsBefore + 1);
+        assertThat(count("auction.bids.placed")).isEqualTo(bidsBefore + 1);
     }
 
     @Test
@@ -146,5 +159,9 @@ class AuctionFlowIntegrationTest {
         assertThatThrownBy(() -> deleteLot.execute(lot.id(), seller.id()))
                 .isInstanceOf(BusinessConflictException.class)
                 .hasMessageContaining("cannot be deleted");
+    }
+
+    private double count(String name) {
+        return meterRegistry.get(name).counter().count();
     }
 }

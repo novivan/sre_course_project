@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.List;
 
 import dev.sre.auction.auction.domain.Auction;
+import dev.sre.auction.platform.metrics.AuctionMetrics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,10 +14,16 @@ public class AuctionLifecycleService {
 
     private final AuctionRepository auctions;
     private final Clock clock;
+    private final AuctionMetrics metrics;
 
-    public AuctionLifecycleService(AuctionRepository auctions, Clock clock) {
+    public AuctionLifecycleService(
+            AuctionRepository auctions,
+            Clock clock,
+            AuctionMetrics metrics
+    ) {
         this.auctions = auctions;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -24,6 +31,8 @@ public class AuctionLifecycleService {
         Instant now = clock.instant();
         int activated = updateScheduled(now, batchSize);
         int finished = updateExpired(now, batchSize);
+        metrics.auctionsActivated(activated);
+        metrics.auctionsFinished(finished);
         return new LifecycleResult(activated, finished);
     }
 

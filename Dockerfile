@@ -18,6 +18,6 @@ WORKDIR /app
 COPY --from=build /workspace/build/libs/auction-*.jar /app/auction.jar
 
 USER auction
-EXPOSE 8080
+EXPOSE 8080 9090
 
 ENTRYPOINT ["java", "-jar", "/app/auction.jar"]

@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import dev.sre.auction.platform.error.InvalidRequestException;
+import dev.sre.auction.platform.metrics.AuctionMetrics;
 import dev.sre.auction.user.domain.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,10 +15,12 @@ public class CreateUserService {
 
     private final UserRepository users;
     private final Clock clock;
+    private final AuctionMetrics metrics;
 
-    public CreateUserService(UserRepository users, Clock clock) {
+    public CreateUserService(UserRepository users, Clock clock, AuctionMetrics metrics) {
         this.users = users;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -32,6 +35,7 @@ public class CreateUserService {
 
         User user = new User(UUID.randomUUID(), username, clock.instant());
         users.insert(user);
+        metrics.userCreated();
         return user;
     }
 }
