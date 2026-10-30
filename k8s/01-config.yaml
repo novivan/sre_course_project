@@ -8,6 +8,8 @@ data:
   MANAGEMENT_SERVER_PORT: "9090"
   WORKER_POLL_DELAY: 1s
   WORKER_BATCH_SIZE: "100"
+  PROBE_INTERVAL: 5s
+  PROBE_TIMEOUT: 2s
 ---
 apiVersion: v1
 kind: Secret

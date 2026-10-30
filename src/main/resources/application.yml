@@ -45,6 +45,12 @@ management:
 
 app:
   role: ${APP_ROLE:api}
+  demo:
+    enabled: ${DEMO_ENABLED:false}
+  probe:
+    url: ${PROBE_URL:http://localhost:8080/api/v1/lots}
+    interval: ${PROBE_INTERVAL:5s}
+    timeout: ${PROBE_TIMEOUT:2s}
   worker:
     poll-delay: ${WORKER_POLL_DELAY:1s}
     batch-size: ${WORKER_BATCH_SIZE:100}

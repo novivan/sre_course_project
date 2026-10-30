@@ -49,6 +49,8 @@ spec:
               value: worker
             - name: SERVICE_NAME
               value: auction-worker
+            - name: PROBE_URL
+              value: http://auction-api/api/v1/lots
             - name: SPRING_FLYWAY_ENABLED
               value: "false"
             - name: DB_POOL_SIZE
