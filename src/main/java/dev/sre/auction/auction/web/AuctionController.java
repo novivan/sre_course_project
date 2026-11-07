@@ -1,5 +1,7 @@
 package dev.sre.auction.auction.web;
 
+import static dev.sre.auction.platform.metrics.AuctionMetrics.BusinessOperation.CREATE_AUCTION;
+
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
@@ -8,6 +10,7 @@ import dev.sre.auction.auction.application.AuctionQueryService;
 import dev.sre.auction.auction.application.CreateAuctionCommand;
 import dev.sre.auction.auction.application.CreateAuctionService;
 import dev.sre.auction.auction.domain.Auction;
+import dev.sre.auction.platform.metrics.AuctionMetrics;
 import jakarta.validation.Valid;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
@@ -26,25 +29,34 @@ public class AuctionController {
 
     private final CreateAuctionService createAuction;
     private final AuctionQueryService query;
+    private final AuctionMetrics metrics;
 
-    public AuctionController(CreateAuctionService createAuction, AuctionQueryService query) {
+    public AuctionController(
+            CreateAuctionService createAuction,
+            AuctionQueryService query,
+            AuctionMetrics metrics
+    ) {
         this.createAuction = createAuction;
         this.query = query;
+        this.metrics = metrics;
     }
 
     @PostMapping
     public ResponseEntity<AuctionResponse> create(
             @Valid @RequestBody CreateAuctionRequest request
     ) {
-        Auction auction = createAuction.execute(new CreateAuctionCommand(
-                request.lotId(),
-                request.sellerId(),
-                request.currency(),
-                request.startPriceMinor(),
-                request.minIncrementMinor(),
-                request.startsAt(),
-                request.endsAt()
-        ));
+        Auction auction = metrics.recordBusinessOperation(
+                CREATE_AUCTION,
+                () -> createAuction.execute(new CreateAuctionCommand(
+                        request.lotId(),
+                        request.sellerId(),
+                        request.currency(),
+                        request.startPriceMinor(),
+                        request.minIncrementMinor(),
+                        request.startsAt(),
+                        request.endsAt()
+                ))
+        );
         return ResponseEntity
                 .created(URI.create("/api/v1/auctions/" + auction.id()))
                 .body(AuctionResponse.from(auction));

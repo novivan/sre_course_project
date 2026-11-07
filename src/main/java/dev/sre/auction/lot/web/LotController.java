@@ -1,5 +1,7 @@
 package dev.sre.auction.lot.web;
 
+import static dev.sre.auction.platform.metrics.AuctionMetrics.BusinessOperation.CREATE_LOT;
+
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
@@ -9,6 +11,7 @@ import dev.sre.auction.lot.application.DeleteLotService;
 import dev.sre.auction.lot.application.LotQueryService;
 import dev.sre.auction.lot.application.UpdateLotService;
 import dev.sre.auction.lot.domain.Lot;
+import dev.sre.auction.platform.metrics.AuctionMetrics;
 import jakarta.validation.Valid;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
@@ -31,26 +34,32 @@ public class LotController {
     private final UpdateLotService updateLot;
     private final DeleteLotService deleteLot;
     private final LotQueryService query;
+    private final AuctionMetrics metrics;
 
     public LotController(
             CreateLotService createLot,
             UpdateLotService updateLot,
             DeleteLotService deleteLot,
-            LotQueryService query
+            LotQueryService query,
+            AuctionMetrics metrics
     ) {
         this.createLot = createLot;
         this.updateLot = updateLot;
         this.deleteLot = deleteLot;
         this.query = query;
+        this.metrics = metrics;
     }
 
     @PostMapping
     public ResponseEntity<LotResponse> create(@Valid @RequestBody CreateLotRequest request) {
-        Lot lot = createLot.execute(
-                request.sellerId(),
-                request.title(),
-                request.description(),
-                request.imageUrl()
+        Lot lot = metrics.recordBusinessOperation(
+                CREATE_LOT,
+                () -> createLot.execute(
+                        request.sellerId(),
+                        request.title(),
+                        request.description(),
+                        request.imageUrl()
+                )
         );
         return ResponseEntity
                 .created(URI.create("/api/v1/lots/" + lot.id()))

@@ -1,5 +1,8 @@
 package dev.sre.auction.platform.web;
 
+import dev.sre.auction.platform.error.InvalidRequestException;
+import dev.sre.auction.platform.metrics.AuctionMetrics;
+import dev.sre.auction.platform.metrics.AuctionMetrics.BusinessOperation;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class SliDemoController {
 
     private static final long MAX_DELAY_MS = 5_000;
+    private final AuctionMetrics metrics;
+
+    public SliDemoController(AuctionMetrics metrics) {
+        this.metrics = metrics;
+    }
 
     @GetMapping
     public DemoResponse invoke(
@@ -27,6 +35,27 @@ public class SliDemoController {
         };
     }
 
+    @GetMapping("/business")
+    public BusinessDemoResponse invokeBusiness(
+            @RequestParam BusinessOperation operation,
+            @RequestParam(defaultValue = "ok") String mode
+    ) {
+        return metrics.recordBusinessOperation(operation, () -> switch (mode) {
+            case "ok" -> new BusinessDemoResponse(operation.tagValue(), mode);
+            case "rejected" -> throw new InvalidRequestException(
+                    "DEMO_BUSINESS_REJECTION",
+                    "Simulated valid business rejection"
+            );
+            case "error" -> throw new IllegalStateException(
+                    "Simulated technical failure of a business operation"
+            );
+            default -> throw new InvalidRequestException(
+                    "UNKNOWN_DEMO_MODE",
+                    "Unknown business demo mode: " + mode
+            );
+        });
+    }
+
     private DemoResponse slow(long requestedDelayMs) {
         long delayMs = Math.clamp(requestedDelayMs, 0, MAX_DELAY_MS);
         try {
@@ -39,5 +68,8 @@ public class SliDemoController {
     }
 
     public record DemoResponse(String mode, long delayMs) {
+    }
+
+    public record BusinessDemoResponse(String operation, String mode) {
     }
 }
