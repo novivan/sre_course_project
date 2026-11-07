@@ -19,3 +19,8 @@ helm upgrade --install vm-agent vm/victoria-metrics-agent \
   --version 0.50.0 \
   --values "${SCRIPT_DIR}/vmagent-values.yaml" \
   --wait
+
+kubectl apply -k "${SCRIPT_DIR}/alerts"
+kubectl rollout status deployment/alert-receiver -n monitoring --timeout=180s
+kubectl rollout status deployment/alertmanager -n monitoring --timeout=180s
+kubectl rollout status deployment/vmalert -n monitoring --timeout=180s
