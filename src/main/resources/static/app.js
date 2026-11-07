@@ -322,10 +322,9 @@ elements.bidAuction.addEventListener('change', syncMinimumBid);
 
 async function initialize() {
     try {
-        const health = await api('/actuator/health');
-        elements.health.classList.add('is-up');
-        elements.health.querySelector('span:last-child').textContent = `API ${health.status}`;
         await loadAll();
+        elements.health.classList.add('is-up');
+        elements.health.querySelector('span:last-child').textContent = 'API UP';
     } catch (error) {
         elements.health.classList.add('is-down');
         elements.health.querySelector('span:last-child').textContent = 'API недоступно';
