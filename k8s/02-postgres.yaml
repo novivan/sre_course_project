@@ -25,6 +25,7 @@ spec:
       labels:
         app.kubernetes.io/name: postgres
         app.kubernetes.io/component: database
+        release: postgres
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9187"

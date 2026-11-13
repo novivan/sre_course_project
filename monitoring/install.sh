@@ -24,3 +24,6 @@ kubectl apply -k "${SCRIPT_DIR}/alerts"
 kubectl rollout status deployment/alert-receiver -n monitoring --timeout=180s
 kubectl rollout status deployment/alertmanager -n monitoring --timeout=180s
 kubectl rollout status deployment/vmalert -n monitoring --timeout=180s
+
+kubectl apply -k "${SCRIPT_DIR}/grafana"
+kubectl rollout status deployment/grafana -n monitoring --timeout=300s

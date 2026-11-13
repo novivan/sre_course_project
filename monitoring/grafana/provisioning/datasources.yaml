@@ -1,0 +1,15 @@
+apiVersion: 1
+prune: true
+datasources:
+  - name: VictoriaMetrics
+    type: prometheus
+    uid: victoria-metrics
+    access: proxy
+    url: http://vm-single-victoria-metrics-single-server.monitoring.svc.cluster.local:8428
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      prometheusType: Prometheus
+      timeInterval: 10s
+      manageAlerts: false

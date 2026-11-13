@@ -1,0 +1,249 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "RED, Golden Signals, business SLI and JVM metrics for the auction application.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "vmagent can scrape the API metrics endpoint.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"color": "red", "index": 1, "text": "DOWN"}, "1": {"color": "green", "index": 0, "text": "UP"}}, "type": "value"}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+      "targets": [
+        {"editorMode": "code", "expr": "max(up{namespace=\"auction\",container=\"api\"})", "instant": true, "legendFormat": "API", "range": false, "refId": "A"}
+      ],
+      "title": "API status",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "vmagent can scrape the worker metrics endpoint.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"color": "red", "index": 1, "text": "DOWN"}, "1": {"color": "green", "index": 0, "text": "UP"}}, "type": "value"}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+      "id": 2,
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+      "targets": [
+        {"editorMode": "code", "expr": "max(up{namespace=\"auction\",container=\"worker\"})", "instant": true, "legendFormat": "Worker", "range": false, "refId": "A"}
+      ],
+      "title": "Worker status",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "Request rate from Spring Actuator HTTP metrics.",
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 2, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}, "unit": "reqps"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+      "id": 3,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+      "targets": [
+        {"editorMode": "code", "expr": "sum(rate(http_server_requests_seconds_count{service=\"auction-api\"}[1m]))", "instant": true, "legendFormat": "RPS", "range": false, "refId": "A"}
+      ],
+      "title": "Request rate",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "Share of HTTP responses with a 5xx status.",
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 2, "max": 100, "min": 0, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 1}, {"color": "red", "value": 5}]}, "unit": "percent"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
+      "id": 4,
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+      "targets": [
+        {"editorMode": "code", "expr": "100 * (sum(rate(http_server_requests_seconds_count{service=\"auction-api\",status=~\"5..\"}[1m])) or vector(0)) / clamp_min(sum(rate(http_server_requests_seconds_count{service=\"auction-api\"}[1m])), 0.001)", "instant": true, "legendFormat": "5xx", "range": false, "refId": "A"}
+      ],
+      "title": "HTTP 5xx rate",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "Mean HTTP request duration calculated from count and sum.",
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 1, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 300}, {"color": "red", "value": 1000}]}, "unit": "ms"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
+      "id": 5,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+      "targets": [
+        {"editorMode": "code", "expr": "1000 * sum(rate(http_server_requests_seconds_sum{service=\"auction-api\"}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{service=\"auction-api\"}[5m])), 0.001)", "instant": true, "legendFormat": "Average", "range": false, "refId": "A"}
+      ],
+      "title": "Average latency",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "SLA is the share of successful synthetic checks over 30 days. Target: at least 99%.",
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 3, "max": 100, "min": 95, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 99}]}, "unit": "percent"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0},
+      "id": 6,
+      "options": {"minVizHeight": 75, "minVizWidth": 75, "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true, "sizing": "auto"},
+      "targets": [
+        {"editorMode": "code", "expr": "100 * sum(increase(auction_probe_checks_total{service=\"auction-worker\",result=\"success\"}[30d])) / clamp_min(sum(increase(auction_probe_checks_total{service=\"auction-worker\"}[30d])), 1)", "instant": true, "legendFormat": "SLA", "range": false, "refId": "A"}
+      ],
+      "title": "Probe SLA, 30d (target ≥99%)",
+      "type": "gauge"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "RED: request rate split by HTTP status.",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 15, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": true, "stacking": {"group": "A", "mode": "none"}}, "unit": "reqps"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 4},
+      "id": 7,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "sum by (status) (rate(http_server_requests_seconds_count{service=\"auction-api\"}[$__rate_interval]))", "legendFormat": "HTTP {{status}}", "range": true, "refId": "A"}
+      ],
+      "title": "Traffic: RPS by status",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "RED: percentage of failed HTTP requests.",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 15, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": true, "stacking": {"group": "A", "mode": "none"}}, "max": 100, "min": 0, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 5}]}, "unit": "percent"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 4},
+      "id": 8,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "100 * (sum(rate(http_server_requests_seconds_count{service=\"auction-api\",status=~\"5..\"}[$__rate_interval])) or vector(0)) / clamp_min(sum(rate(http_server_requests_seconds_count{service=\"auction-api\"}[$__rate_interval])), 0.001)", "legendFormat": "5xx rate", "range": true, "refId": "A"}
+      ],
+      "title": "Errors: HTTP 5xx rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "RED: mean request duration.",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 15, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": true, "stacking": {"group": "A", "mode": "none"}}, "unit": "ms"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 4},
+      "id": 9,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "1000 * sum(rate(http_server_requests_seconds_sum{service=\"auction-api\"}[$__rate_interval])) / clamp_min(sum(rate(http_server_requests_seconds_count{service=\"auction-api\"}[$__rate_interval])), 0.001)", "legendFormat": "Average latency", "range": true, "refId": "A"}
+      ],
+      "title": "Duration: average latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "Rate of customer-facing operations grouped by operation and result.",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 12, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": true, "stacking": {"group": "A", "mode": "none"}}, "unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "id": 10,
+      "options": {"legend": {"calcs": ["sum"], "displayMode": "table", "placement": "right", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "sum by (operation, result) (rate(auction_business_operations_total{service=\"auction-api\"}[$__rate_interval]))", "legendFormat": "{{operation}} / {{result}}", "range": true, "refId": "A"}
+      ],
+      "title": "Business operations",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "Short-window SLI of the synthetic worker probe.",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 20, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": true, "stacking": {"group": "A", "mode": "none"}}, "max": 100, "min": 90, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 99}]}, "unit": "percent"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "id": 11,
+      "options": {"legend": {"calcs": ["mean", "min"], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "100 * sum(increase(auction_probe_checks_total{service=\"auction-worker\",result=\"success\"}[5m])) / clamp_min(sum(increase(auction_probe_checks_total{service=\"auction-worker\"}[5m])), 1)", "legendFormat": "Probe availability", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "vector(99)", "legendFormat": "SLA target", "range": true, "refId": "B"}
+      ],
+      "title": "Probe availability SLI",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "USE saturation signal: heap usage for each JVM.",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 15, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": true, "stacking": {"group": "A", "mode": "none"}}, "max": 100, "min": 0, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 75}, {"color": "red", "value": 85}]}, "unit": "percent"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 20},
+      "id": 12,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "100 * sum by (service, pod) (jvm_memory_used_bytes{service=~\"auction-api|auction-worker\",area=\"heap\"}) / clamp_min(sum by (service, pod) (jvm_memory_max_bytes{service=~\"auction-api|auction-worker\",area=\"heap\"}), 1)", "legendFormat": "{{service}} / {{pod}}", "range": true, "refId": "A"}
+      ],
+      "title": "JVM heap usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "USE utilization signal: CPU used by each JVM process.",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 15, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": true, "stacking": {"group": "A", "mode": "none"}}, "max": 100, "min": 0, "unit": "percent"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 20},
+      "id": 13,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "100 * process_cpu_usage{service=~\"auction-api|auction-worker\"}", "legendFormat": "{{service}} / {{pod}}", "range": true, "refId": "A"}
+      ],
+      "title": "JVM process CPU",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "Runtime detail from Spring Actuator and Micrometer.",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 15, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": true, "stacking": {"group": "A", "mode": "none"}}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 20},
+      "id": 14,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "jvm_threads_live_threads{service=~\"auction-api|auction-worker\"}", "legendFormat": "{{service}} / {{pod}}", "range": true, "refId": "A"}
+      ],
+      "title": "JVM live threads",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoria-metrics"},
+      "description": "Database connection pool load in the API and worker.",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 15, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": true, "stacking": {"group": "A", "mode": "none"}}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 7, "w": 24, "x": 0, "y": 28},
+      "id": 15,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "right", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "hikaricp_connections_active{service=~\"auction-api|auction-worker\"}", "legendFormat": "active / {{service}}", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "hikaricp_connections_pending{service=~\"auction-api|auction-worker\"}", "legendFormat": "pending / {{service}}", "range": true, "refId": "B"}
+      ],
+      "title": "HikariCP connections",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 41,
+  "tags": ["sre", "auction", "victoriametrics"],
+  "templating": {"list": []},
+  "time": {"from": "now-30m", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Auction Service Overview",
+  "uid": "auction-overview",
+  "version": 1,
+  "weekStart": ""
+}
