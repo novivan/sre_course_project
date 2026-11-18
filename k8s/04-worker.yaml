@@ -49,6 +49,12 @@ spec:
               value: worker
             - name: SERVICE_NAME
               value: auction-worker
+            - name: APP_VERSION
+              value: v1.0.0
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: PROBE_URL
               value: http://auction-api/api/v1/lots
             - name: SPRING_FLYWAY_ENABLED

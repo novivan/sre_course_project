@@ -22,6 +22,8 @@ services:
     environment: &application-environment
       APP_ROLE: api
       SERVICE_NAME: auction-api
+      APP_VERSION: ${APP_VERSION:-v1.0.0}
+      POD_NAME: compose-api
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-auction}
       DB_USERNAME: ${POSTGRES_USER:-auction}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-auction}

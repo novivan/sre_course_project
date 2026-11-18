@@ -1,0 +1,18 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: auction-gateway
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: auction-gateway
+  namespace: auction
+spec:
+  gatewayClassName: auction-gateway
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80

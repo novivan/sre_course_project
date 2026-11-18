@@ -39,12 +39,23 @@ management:
       probes:
         enabled: true
       show-details: never
+  info:
+    env:
+      enabled: true
   metrics:
     tags:
       service: ${spring.application.name}
+      version: ${app.version}
+
+info:
+  app:
+    version: ${app.version}
+    instance: ${app.instance}
 
 app:
   role: ${APP_ROLE:api}
+  version: ${APP_VERSION:dev}
+  instance: ${POD_NAME:${HOSTNAME:local}}
   demo:
     enabled: ${DEMO_ENABLED:false}
   probe:

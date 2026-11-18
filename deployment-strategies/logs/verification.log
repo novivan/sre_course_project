@@ -1,0 +1,60 @@
+
+===== Pods and probes =====
+NAME                              READY   STATUS    RESTARTS   AGE     VERSION
+auction-api-84977fcb78-8d8gc      1/1     Running   0          2m5s    v2.0.0
+auction-api-84977fcb78-qm7bw      1/1     Running   0          2m17s   v2.0.0
+auction-api-v1-556b8b8bc8-tf586   1/1     Running   0          20s     v1.0.0
+auction-api-v1-556b8b8bc8-wlhzh   1/1     Running   0          31s     v1.0.0
+auction-api-v2-64ffd546d-mf8n8    1/1     Running   0          20s     v2.0.0
+auction-api-v2-64ffd546d-rthqr    1/1     Running   0          31s     v2.0.0
+
+===== Rolling v1 -> v2 =====
+До обновления:
+   6 v1.0.0
+Во время обновления:
+  47 v1.0.0
+  13 v2.0.0
+После обновления:
+   6 v2.0.0
+
+===== Blue/Green and rollback =====
+Green:
+   8 v1.0.0
+Blue:
+   8 v2.0.0
+Rollback to green:
+   8 v1.0.0
+
+===== Canary 90/10 -> 50/50 -> 0/100 =====
+90/10, 100 requests:
+  89 v1.0.0
+  11 v2.0.0
+50/50, 100 requests:
+  50 v1.0.0
+  50 v2.0.0
+0/100, 30 requests:
+  30 v2.0.0
+
+===== A/B by x-user-group header =====
+Default audience:
+   5 v1.0.0
+Beta audience:
+   5 v2.0.0
+
+===== Shadow traffic =====
+Client responses (must be v1):
+  12 v1.0.0
+Requests mirrored to v2 logs:
+[pod/auction-api-v2-859c78d47c-4dvfw/api] {"@timestamp":"2026-11-18T23:06:09.499542297Z","log":{"level":"INFO","logger":"dev.sre.auction.platform.web.DeploymentInfoController"},"process":{"pid":1,"thread":{"name":"http-nio-8080-exec-1"}},"service":{"name":"auction-api","version":"0.1.0-SNAPSHOT","node":{}},"message":"Deployment info requested: version=v2.0.0, instance=auction-api-v2-859c78d47c-4dvfw","requestId":"96ba068b-101e-4484-8947-49e78d23b7c8","ecs":{"version":"8.11"}}
+[pod/auction-api-v2-859c78d47c-4dvfw/api] {"@timestamp":"2026-11-18T23:06:10.616458956Z","log":{"level":"INFO","logger":"dev.sre.auction.platform.web.DeploymentInfoController"},"process":{"pid":1,"thread":{"name":"http-nio-8080-exec-2"}},"service":{"name":"auction-api","version":"0.1.0-SNAPSHOT","node":{}},"message":"Deployment info requested: version=v2.0.0, instance=auction-api-v2-859c78d47c-4dvfw","requestId":"0da98a06-8e6e-449b-9361-e12481186df0","ecs":{"version":"8.11"}}
+[pod/auction-api-v2-859c78d47c-4dvfw/api] {"@timestamp":"2026-11-18T23:06:10.668618283Z","log":{"level":"INFO","logger":"dev.sre.auction.platform.web.DeploymentInfoController"},"process":{"pid":1,"thread":{"name":"http-nio-8080-exec-3"}},"service":{"name":"auction-api","version":"0.1.0-SNAPSHOT","node":{}},"message":"Deployment info requested: version=v2.0.0, instance=auction-api-v2-859c78d47c-4dvfw","requestId":"c3d786ae-113f-44b7-8c52-3efd266efa84","ecs":{"version":"8.11"}}
+[pod/auction-api-v2-859c78d47c-4dvfw/api] {"@timestamp":"2026-11-18T23:06:10.703438400Z","log":{"level":"INFO","logger":"dev.sre.auction.platform.web.DeploymentInfoController"},"process":{"pid":1,"thread":{"name":"http-nio-8080-exec-4"}},"service":{"name":"auction-api","version":"0.1.0-SNAPSHOT","node":{}},"message":"Deployment info requested: version=v2.0.0, instance=auction-api-v2-859c78d47c-4dvfw","requestId":"dc9acb46-777b-4b81-a5dc-8879f7efb15b","ecs":{"version":"8.11"}}
+[pod/auction-api-v2-859c78d47c-l84h9/api] {"@timestamp":"2026-11-18T23:06:10.565551775Z","log":{"level":"INFO","logger":"dev.sre.auction.platform.web.DeploymentInfoController"},"process":{"pid":1,"thread":{"name":"http-nio-8080-exec-1"}},"service":{"name":"auction-api","version":"0.1.0-SNAPSHOT","node":{}},"message":"Deployment info requested: version=v2.0.0, instance=auction-api-v2-859c78d47c-l84h9","requestId":"a62a92e2-7c1d-4c72-ab5e-efd550e06eb4","ecs":{"version":"8.11"}}
+[pod/auction-api-v2-859c78d47c-l84h9/api] {"@timestamp":"2026-11-18T23:06:10.633289550Z","log":{"level":"INFO","logger":"dev.sre.auction.platform.web.DeploymentInfoController"},"process":{"pid":1,"thread":{"name":"http-nio-8080-exec-2"}},"service":{"name":"auction-api","version":"0.1.0-SNAPSHOT","node":{}},"message":"Deployment info requested: version=v2.0.0, instance=auction-api-v2-859c78d47c-l84h9","requestId":"bcb8c666-b520-48de-9fe1-055876c4d33e","ecs":{"version":"8.11"}}
+[pod/auction-api-v2-859c78d47c-l84h9/api] {"@timestamp":"2026-11-18T23:06:10.719348728Z","log":{"level":"INFO","logger":"dev.sre.auction.platform.web.DeploymentInfoController"},"process":{"pid":1,"thread":{"name":"http-nio-8080-exec-3"}},"service":{"name":"auction-api","version":"0.1.0-SNAPSHOT","node":{}},"message":"Deployment info requested: version=v2.0.0, instance=auction-api-v2-859c78d47c-l84h9","requestId":"92f6b73e-5669-4ebf-9868-0a0e46e4e9df","ecs":{"version":"8.11"}}
+
+===== HTTPRoute status =====
+NAME            HOSTNAMES   AGE
+auction-route               80m
+
+All deployment strategies verified.
